@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Облік пального</string>
+
+    <!-- Загальне -->
+    <string name="back">Назад</string>
+    <string name="save">Зберегти</string>
+    <string name="cancel">Скасувати</string>
+    <string name="delete">Видалити</string>
+    <string name="edit">Редагувати</string>
+    <string name="close">Закрити</string>
+    <string name="unit_km">км</string>
+    <string name="unit_liters">л</string>
+    <string name="unit_l100">л/100 км</string>
+    <string name="gauge_description">Рівень пального: %1$s</string>
+
+    <!-- Головний -->
+    <string name="home_title">Облік пального</string>
+    <string name="home_history">Історія заправок</string>
+    <string name="home_settings">Налаштування</string>
+    <string name="home_fuel_left">Залишок у баку</string>
+    <string name="home_fuel_left_at">після останньої заправки (%1$s км)</string>
+    <string name="home_fuel_value">%1$s з %2$s л</string>
+    <string name="home_fuel_unknown">Залишок поки невідомий</string>
+    <string name="home_avg">Середня витрата</string>
+    <string name="home_last_interval">Останній інтервал</string>
+    <string name="home_range">Запас ходу</string>
+    <string name="home_add">Додати заправку</string>
+    <string name="home_estimate">Прикинути</string>
+    <string name="home_no_entries">Ще немає жодної заправки. Додайте першу — і тут з’явиться статистика.</string>
+    <string name="home_not_enough_data">Для розрахунку витрати потрібні щонайменше дві заправки «до повного бака» з пробігом між ними.</string>
+    <string name="home_range_hint">орієнтовно, від місця останньої заправки</string>
+
+    <!-- Форма заправки -->
+    <string name="entry_add_title">Нова заправка</string>
+    <string name="entry_edit_title">Редагування заправки</string>
+    <string name="entry_odometer">Пробіг з одометра, км</string>
+    <string name="entry_liters">Залито пального, л</string>
+    <string name="entry_full_tank">Повний бак</string>
+    <string name="entry_full_tank_hint">Заправили «до відсічки»</string>
+    <string name="entry_date">Дата</string>
+    <string name="entry_last_odometer">Попередня заправка: %1$s км</string>
+    <string name="entry_delete_confirm_title">Видалити заправку?</string>
+    <string name="entry_delete_confirm_text">Запис буде видалено, статистику перераховано.</string>
+    <string name="entry_not_found">Запис не знайдено</string>
+
+    <!-- Історія -->
+    <string name="history_title">Історія заправок</string>
+    <string name="history_empty">Заправок поки немає.</string>
+    <string name="history_item_title">%1$s км · %2$s л</string>
+    <string name="history_full">повний бак</string>
+    <string name="history_partial">неповний</string>
+    <string name="history_consumption">%1$s л/100 км</string>
+    <string name="history_delete_confirm_text">%1$s, %2$s км, %3$s л. Статистику буде перераховано.</string>
+
+    <!-- Прикинути -->
+    <string name="estimate_title">Прикинути</string>
+    <string name="estimate_mode_odometer">Пробіг з одометра</string>
+    <string name="estimate_mode_distance">Проїхано км</string>
+    <string name="estimate_input_odometer">Поточний пробіг, км</string>
+    <string name="estimate_input_distance">Проїхано від останньої заправки, км</string>
+    <string name="estimate_last_refuel">Остання заправка: %1$s км</string>
+    <string name="estimate_fuel_left">Приблизно в баку</string>
+    <string name="estimate_range">Вистачить приблизно на</string>
+    <string name="estimate_hint">Нічого не зберігається — це лише прикидка.</string>
+    <string name="estimate_enter_value">Введіть значення, щоб побачити розрахунок.</string>
+    <string name="estimate_empty_tank">Схоже, бак уже порожній — час заправитися!</string>
+
+    <!-- Налаштування -->
+    <string name="settings_title">Налаштування</string>
+    <string name="settings_tank">Бак</string>
+    <string name="settings_capacity">Об’єм бака, л</string>
+    <string name="settings_initial">Початковий залишок, л</string>
+    <string name="settings_initial_hint">Скільки пального було в баку перед першою записаною заправкою</string>
+    <string name="settings_saved">Збережено</string>
+    <string name="settings_updates">Оновлення</string>
+    <string name="settings_check_updates">Перевірити оновлення</string>
+    <string name="settings_version">Версія застосунку: %1$s</string>
+    <string name="settings_repo">Джерело оновлень: github.com/%1$s</string>
+    <string name="settings_checking">Перевіряємо…</string>
+    <string name="settings_up_to_date">У вас остання версія.</string>
+    <string name="settings_update_available">Доступна нова версія %1$s</string>
+    <string name="settings_show_update">Показати</string>
+
+    <!-- Оновлення -->
+    <string name="update_title">Доступне оновлення %1$s</string>
+    <string name="update_current">Встановлена версія: %1$s</string>
+    <string name="update_whats_new">Що нового:</string>
+    <string name="update_no_notes">Опис змін відсутній.</string>
+    <string name="update_button">Оновити</string>
+    <string name="update_later">Пізніше</string>
+    <string name="update_downloading">Завантаження…</string>
+    <string name="update_downloading_percent">Завантаження… %1$d%%</string>
+    <string name="update_install">Встановити</string>
+    <string name="update_ready">Оновлення завантажено.</string>
+    <string name="update_needs_permission">Дозвольте встановлення застосунків із цього джерела, поверніться сюди й натисніть «Встановити».</string>
+    <string name="update_error_title">Не вдалося оновитися</string>
+    <string name="update_download_title">Оновлення %1$s</string>
+    <string name="update_download_description">Завантаження нової версії</string>
+
+    <string name="update_error_network">Немає зв’язку з GitHub. Перевірте інтернет.</string>
+    <string name="update_error_no_releases">У репозиторії ще немає релізів.</string>
+    <string name="update_error_rate_limit">GitHub тимчасово обмежив запити. Спробуйте пізніше.</string>
+    <string name="update_error_bad_response">Не вдалося прочитати відповідь GitHub.</string>
+    <string name="update_error_no_apk">У релізі немає файлу .apk.</string>
+    <string name="update_error_storage">Немає доступу до сховища для завантаження.</string>
+    <string name="update_error_download">Завантаження не вдалося. Спробуйте ще раз.</string>
+
+    <!-- Помилки вводу -->
+    <string name="error_empty">Заповніть поле</string>
+    <string name="error_not_a_number">Введіть число</string>
+    <string name="error_must_be_positive">Має бути більше 0</string>
+    <string name="error_negative">Не може бути від’ємним</string>
+    <string name="error_odometer_less_than_previous">Не може бути меншим за попередній пробіг (%1$s км)</string>
+    <string name="error_odometer_greater_than_next">Не може бути більшим за пробіг наступної заправки (%1$s км)</string>
+    <string name="error_odometer_below_last">Менше за пробіг останньої заправки (%1$s км)</string>
+    <string name="error_exceeds_tank">Більше за об’єм бака</string>
+    <string name="error_too_large">Завелике значення</string>
+</resources>
