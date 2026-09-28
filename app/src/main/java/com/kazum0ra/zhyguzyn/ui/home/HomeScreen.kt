@@ -40,6 +40,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.kazum0ra.zhyguzyn.AppContainer
 import com.kazum0ra.zhyguzyn.R
+import com.kazum0ra.zhyguzyn.domain.ConsumptionSource
 import com.kazum0ra.zhyguzyn.domain.FuelStats
 import com.kazum0ra.zhyguzyn.ui.components.Format
 import com.kazum0ra.zhyguzyn.ui.components.FuelGauge
@@ -164,6 +165,12 @@ private fun StatsCard(stats: FuelStats) {
             StatRow(
                 label = stringResource(R.string.home_avg),
                 value = "${Format.consumption(average)} ${stringResource(R.string.unit_l100)}",
+                hint = when (stats.consumptionSource) {
+                    ConsumptionSource.FULL_TO_FULL -> stringResource(R.string.home_source_full)
+                    ConsumptionSource.ALL_REFUELS -> stringResource(R.string.home_source_all)
+                    ConsumptionSource.MANUAL -> stringResource(R.string.home_source_manual)
+                    null -> null
+                },
             )
             stats.lastIntervalConsumption?.let {
                 StatRow(

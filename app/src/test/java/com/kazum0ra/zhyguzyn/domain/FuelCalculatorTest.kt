@@ -341,4 +341,95 @@ class FuelCalculatorTest {
         )
         assertEquals(Estimate.Invalid(InputError.NEGATIVE), FuelCalculator.estimateByOdometer(tripStats(), -5.0))
     }
+
+    // --- Без повних баків: за всіма заправками і власна норма ---
+
+    @Test
+    fun `full to full is the preferred source`() {
+        val stats = FuelCalculator.calculate(
+            listOf(refuel(10_000.0, 40.0), refuel(10_500.0, 35.0)),
+            tank.copy(manualConsumption = 9.0),
+        )
+        assertEquals(ConsumptionSource.FULL_TO_FULL, stats.consumptionSource)
+        assertClose(7.0, stats.averageConsumption)
+    }
+
+    @Test
+    fun `three partial refuels give an approximate average over all refuels`() {
+        val stats = FuelCalculator.calculate(
+            listOf(
+                refuel(1_000.0, 20.0, full = false),
+                refuel(1_300.0, 24.0, full = false),
+                refuel(1_600.0, 21.0, full = false),
+            ),
+            tank,
+        )
+        assertEquals(ConsumptionSource.ALL_REFUELS, stats.consumptionSource)
+        // (24 + 21) / 600 * 100 — літри першої заправки не рахуються
+        assertClose(7.5, stats.averageConsumption)
+        assertNull(stats.lastIntervalConsumption)
+        // 10 + 20 = 30 → −22,5 + 24 = 31,5 → −22,5 + 21 = 30
+        assertClose(30.0, stats.fuelAfterLastRefuel)
+        assertClose(400.0, stats.rangeKm)
+    }
+
+    @Test
+    fun `one full tank without a second one falls back to all refuels`() {
+        val stats = FuelCalculator.calculate(
+            listOf(
+                refuel(0.0, 45.0, full = true),
+                refuel(300.0, 15.0, full = false),
+                refuel(600.0, 27.0, full = false),
+            ),
+            tank,
+        )
+        assertEquals(ConsumptionSource.ALL_REFUELS, stats.consumptionSource)
+        assertClose(7.0, stats.averageConsumption)
+        // 50 − 21 + 15 = 44 → −21 + 27 = 50
+        assertClose(50.0, stats.fuelAfterLastRefuel)
+    }
+
+    @Test
+    fun `two refuels are not enough for all refuels average`() {
+        val stats = FuelCalculator.calculate(
+            listOf(refuel(1_000.0, 20.0, full = false), refuel(1_300.0, 20.0, full = false)),
+            tank,
+        )
+        assertNull(stats.averageConsumption)
+        assertNull(stats.consumptionSource)
+    }
+
+    @Test
+    fun `manual consumption is used while data is not enough`() {
+        val settings = tank.copy(manualConsumption = 8.0)
+        val single = FuelCalculator.calculate(listOf(refuel(1_000.0, 20.0, full = false)), settings)
+        assertEquals(ConsumptionSource.MANUAL, single.consumptionSource)
+        assertClose(8.0, single.averageConsumption)
+        assertClose(30.0, single.fuelAfterLastRefuel) // 10 + 20
+        assertClose(375.0, single.rangeKm)
+
+        val two = FuelCalculator.calculate(
+            listOf(refuel(1_000.0, 20.0, full = false), refuel(1_300.0, 20.0, full = false)),
+            settings,
+        )
+        assertEquals(ConsumptionSource.MANUAL, two.consumptionSource)
+        assertClose(26.0, two.fuelAfterLastRefuel) // 30 − 24 + 20
+
+        val estimate = FuelCalculator.estimateByDistance(two, 100.0) as Estimate.Ok
+        assertClose(18.0, estimate.fuelLeftLiters)
+    }
+
+    @Test
+    fun `all refuels average works with counter reset`() {
+        val stats = FuelCalculator.calculate(
+            listOf(
+                refuel(800.0, 20.0, full = false),
+                refuel(100.0, 21.0, full = false), // +300
+                refuel(400.0, 21.0, full = false), // +300
+            ),
+            trip,
+        )
+        assertEquals(ConsumptionSource.ALL_REFUELS, stats.consumptionSource)
+        assertClose(7.0, stats.averageConsumption)
+    }
 }

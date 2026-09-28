@@ -156,6 +156,7 @@ object SettingsValidator {
             val capacityError: InputError?,
             val initialError: InputError?,
             val rolloverError: InputError? = null,
+            val manualConsumptionError: InputError? = null,
         ) : Result
     }
 
@@ -163,7 +164,16 @@ object SettingsValidator {
     const val MAX_ROLLOVER_KM = 1_000_000.0
 
     /** @param rolloverText після якого значення лічильник обнуляється; порожньо або 0 — не обнуляється. */
-    fun validate(capacityText: String, initialText: String, rolloverText: String = ""): Result {
+    /** Максимальна норма витрати, л/100 км. */
+    const val MAX_MANUAL_CONSUMPTION = 100.0
+
+    /** @param manualConsumptionText норма витрати, л/100 км; порожньо або 0 — не задано. */
+    fun validate(
+        capacityText: String,
+        initialText: String,
+        rolloverText: String = "",
+        manualConsumptionText: String = "",
+    ): Result {
         var capacityError: InputError? = null
         var capacity = 0.0
         when (val parsed = NumberParser.parse(capacityText)) {
@@ -202,10 +212,23 @@ object SettingsValidator {
             }
         }
 
-        return if (capacityError == null && initialError == null && rolloverError == null) {
-            Result.Valid(TankSettings(capacity, initial, rollover))
+        var manualError: InputError? = null
+        var manual = 0.0
+        if (manualConsumptionText.isNotBlank()) {
+            when (val parsed = NumberParser.parse(manualConsumptionText)) {
+                is NumberParser.Result.Error -> manualError = parsed.error
+                is NumberParser.Result.Ok -> {
+                    manual = parsed.value
+                    if (manual < 0.0) manualError = InputError.NEGATIVE
+                    else if (manual > MAX_MANUAL_CONSUMPTION) manualError = InputError.TOO_LARGE
+                }
+            }
+        }
+
+        return if (capacityError == null && initialError == null && rolloverError == null && manualError == null) {
+            Result.Valid(TankSettings(capacity, initial, rollover, manual))
         } else {
-            Result.Invalid(capacityError, initialError, rolloverError)
+            Result.Invalid(capacityError, initialError, rolloverError, manualError)
         }
     }
 }

@@ -205,6 +205,26 @@ class InputValidationTest {
     }
 
     @Test
+    fun `manual consumption setting`() {
+        assertEquals(
+            SettingsValidator.Result.Valid(TankSettings(40.0, 5.0, 1000.0, 8.5)),
+            SettingsValidator.validate("40", "5", "1000", "8,5"),
+        )
+        assertEquals(
+            SettingsValidator.Result.Valid(TankSettings(40.0, 5.0, 1000.0, 0.0)),
+            SettingsValidator.validate("40", "5", "1000", ""),
+        )
+        assertEquals(
+            SettingsValidator.Result.Invalid(null, null, null, InputError.TOO_LARGE),
+            SettingsValidator.validate("40", "5", "1000", "150"),
+        )
+        assertEquals(
+            SettingsValidator.Result.Invalid(null, null, null, InputError.NOT_A_NUMBER),
+            SettingsValidator.validate("40", "5", "1000", "abc"),
+        )
+    }
+
+    @Test
     fun `invalid settings`() {
         assertEquals(
             SettingsValidator.Result.Invalid(InputError.MUST_BE_POSITIVE, null),

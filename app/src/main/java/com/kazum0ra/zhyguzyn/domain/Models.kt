@@ -20,6 +20,11 @@ data class TankSettings(
      * 0 — лічильник не обнуляється (звичайний одометр).
      */
     val odometerRolloverKm: Double = 0.0,
+    /**
+     * Власна норма витрати, л/100 км. Використовується, поки даних із заправок замало.
+     * 0 — не задано.
+     */
+    val manualConsumption: Double = 0.0,
 ) {
     val hasRollover: Boolean get() = odometerRolloverKm > 0.0
 
@@ -39,6 +44,18 @@ data class ConsumptionInterval(
     val litersPer100Km: Double get() = liters / distanceKm * 100.0
 }
 
+/** Звідки взято середню витрату. */
+enum class ConsumptionSource {
+    /** Точний метод «від повного бака до повного бака». */
+    FULL_TO_FULL,
+
+    /** Приблизно: усі залиті літри (крім першої заправки) / весь пробіг. */
+    ALL_REFUELS,
+
+    /** Норма витрати з налаштувань. */
+    MANUAL,
+}
+
 /** Результат розрахунку за всіма заправками. */
 data class FuelStats(
     val capacityLiters: Double,
@@ -50,8 +67,10 @@ data class FuelStats(
     val intervals: List<ConsumptionInterval>,
     /** Витрата за останній інтервал, л/100 км; null — даних замало. */
     val lastIntervalConsumption: Double?,
-    /** Загальна середня витрата, л/100 км; null — даних замало. */
+    /** Середня витрата, л/100 км; null — даних замало і норму не задано. */
     val averageConsumption: Double?,
+    /** Яким способом отримано [averageConsumption]; null — якщо її немає. */
+    val consumptionSource: ConsumptionSource?,
     /** Залишок одразу після останньої заправки, л; null — неможливо оцінити. */
     val fuelAfterLastRefuel: Double?,
 ) {

@@ -66,6 +66,10 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         private set
     var rolloverError by mutableStateOf<InputError?>(null)
         private set
+    var manualConsumption by mutableStateOf("")
+        private set
+    var manualConsumptionError by mutableStateOf<InputError?>(null)
+        private set
     /** Лічильник успішних збережень — для показу повідомлення. */
     var savedCount by mutableStateOf(0)
         private set
@@ -76,6 +80,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             capacity = Format.editable(settings.capacityLiters)
             initial = Format.editable(settings.initialFuelLiters)
             rollover = Format.editable(settings.odometerRolloverKm)
+            manualConsumption = settings.manualConsumption.takeIf { it > 0.0 }?.let(Format::editable).orEmpty()
             loading = false
         }
     }
@@ -95,12 +100,18 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         rolloverError = null
     }
 
+    fun onManualConsumptionChange(value: String) {
+        manualConsumption = value
+        manualConsumptionError = null
+    }
+
     fun save() {
-        when (val result = SettingsValidator.validate(capacity, initial, rollover)) {
+        when (val result = SettingsValidator.validate(capacity, initial, rollover, manualConsumption)) {
             is SettingsValidator.Result.Invalid -> {
                 capacityError = result.capacityError
                 initialError = result.initialError
                 rolloverError = result.rolloverError
+                manualConsumptionError = result.manualConsumptionError
             }
             is SettingsValidator.Result.Valid -> viewModelScope.launch {
                 container.settingsRepository.saveTankSettings(result.settings)
@@ -160,6 +171,14 @@ fun SettingsScreen(onBack: () -> Unit) {
                 label = stringResource(R.string.settings_rollover),
                 error = viewModel.rolloverError?.message(),
                 supportingText = stringResource(R.string.settings_rollover_hint),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            NumberField(
+                value = viewModel.manualConsumption,
+                onValueChange = viewModel::onManualConsumptionChange,
+                label = stringResource(R.string.settings_manual_consumption),
+                error = viewModel.manualConsumptionError?.message(),
+                supportingText = stringResource(R.string.settings_manual_consumption_hint),
                 imeAction = ImeAction.Done,
                 modifier = Modifier.fillMaxWidth(),
             )

@@ -22,6 +22,7 @@ class SettingsRepository(context: Context) {
         val TANK_CAPACITY = doublePreferencesKey("tank_capacity_liters")
         val INITIAL_FUEL = doublePreferencesKey("initial_fuel_liters")
         val ODOMETER_ROLLOVER = doublePreferencesKey("odometer_rollover_km")
+        val MANUAL_CONSUMPTION = doublePreferencesKey("manual_consumption_l100")
         val LAST_UPDATE_CHECK = longPreferencesKey("last_update_check_millis")
     }
 
@@ -30,6 +31,7 @@ class SettingsRepository(context: Context) {
             capacityLiters = prefs[Keys.TANK_CAPACITY] ?: TankSettings.DEFAULT.capacityLiters,
             initialFuelLiters = prefs[Keys.INITIAL_FUEL] ?: TankSettings.DEFAULT.initialFuelLiters,
             odometerRolloverKm = prefs[Keys.ODOMETER_ROLLOVER] ?: TankSettings.DEFAULT.odometerRolloverKm,
+            manualConsumption = prefs[Keys.MANUAL_CONSUMPTION] ?: TankSettings.DEFAULT.manualConsumption,
         )
     }
 
@@ -38,6 +40,7 @@ class SettingsRepository(context: Context) {
             prefs[Keys.TANK_CAPACITY] = settings.capacityLiters
             prefs[Keys.INITIAL_FUEL] = settings.initialFuelLiters
             prefs[Keys.ODOMETER_ROLLOVER] = settings.odometerRolloverKm
+            prefs[Keys.MANUAL_CONSUMPTION] = settings.manualConsumption
         }
     }
 

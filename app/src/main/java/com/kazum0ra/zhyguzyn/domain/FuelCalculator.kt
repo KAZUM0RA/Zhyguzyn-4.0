@@ -38,7 +38,7 @@ object FuelCalculator {
         val sorted = sortChronologically(refuels, rollover)
         val steps = stepDistances(sorted, rollover)
         val intervals = intervals(sorted, steps)
-        val average = averageConsumption(intervals)
+        val (average, source) = chooseAverage(sorted, steps, intervals, settings.manualConsumption)
         return FuelStats(
             capacityLiters = capacity,
             odometerRolloverKm = rollover,
@@ -47,6 +47,7 @@ object FuelCalculator {
             intervals = intervals,
             lastIntervalConsumption = intervals.lastOrNull()?.litersPer100Km,
             averageConsumption = average,
+            consumptionSource = source,
             fuelAfterLastRefuel = fuelAfterLastRefuel(
                 sorted,
                 steps,
@@ -54,6 +55,39 @@ object FuelCalculator {
                 average,
             ),
         )
+    }
+
+    /** Мінімум заправок для приблизного розрахунку «від заправки до заправки». */
+    const val MIN_REFUELS_FOR_ALL_REFUELS = 3
+
+    /**
+     * Середня витрата за пріоритетом:
+     * 1) «від повного до повного», якщо є хоча б один такий інтервал;
+     * 2) приблизно за всіма заправками, якщо їх щонайменше [MIN_REFUELS_FOR_ALL_REFUELS];
+     * 3) норма з налаштувань, якщо задана.
+     */
+    private fun chooseAverage(
+        sorted: List<Refuel>,
+        steps: List<Double>,
+        intervals: List<ConsumptionInterval>,
+        manualConsumption: Double,
+    ): Pair<Double?, ConsumptionSource?> {
+        averageConsumption(intervals)?.let { return it to ConsumptionSource.FULL_TO_FULL }
+        allRefuelsConsumption(sorted, steps)?.let { return it to ConsumptionSource.ALL_REFUELS }
+        if (manualConsumption > 0.0) return manualConsumption to ConsumptionSource.MANUAL
+        return null to null
+    }
+
+    /**
+     * «Від заправки до заправки» за весь період: вважаємо, що кожною заправкою
+     * доливали те, що спалили з попередньої. Літри першої заправки не рахуються —
+     * їх спалено вже після неї. Похибка не більша за один бак на весь пробіг.
+     */
+    fun allRefuelsConsumption(sorted: List<Refuel>, steps: List<Double>): Double? {
+        if (sorted.size < MIN_REFUELS_FOR_ALL_REFUELS) return null
+        val distance = steps.drop(1).sum()
+        if (distance <= 0.0) return null
+        return sorted.drop(1).sumOf { it.liters } / distance * 100.0
     }
 
     /** steps[i] — км між заправкою i-1 та i (steps[0] = 0). */

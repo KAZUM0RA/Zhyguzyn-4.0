@@ -28,7 +28,10 @@
     <string name="home_add">Додати заправку</string>
     <string name="home_estimate">Прикинути</string>
     <string name="home_no_entries">Ще немає жодної заправки. Додайте першу — і тут з’явиться статистика.</string>
-    <string name="home_not_enough_data">Для розрахунку витрати потрібні щонайменше дві заправки «до повного бака» з пробігом між ними.</string>
+    <string name="home_not_enough_data">Для розрахунку витрати потрібні дві заправки «до повного бака» або щонайменше три будь-які заправки. Поки даних замало, можна вказати свою норму витрати в налаштуваннях.</string>
+    <string name="home_source_full">від повного бака до повного</string>
+    <string name="home_source_all">приблизно, за всіма заправками</string>
+    <string name="home_source_manual">ваша норма з налаштувань</string>
     <string name="home_range_hint">орієнтовно, від місця останньої заправки</string>
 
     <!-- Форма заправки -->
@@ -71,6 +74,8 @@
     <string name="settings_tank">Бак</string>
     <string name="settings_capacity">Об’єм бака, л</string>
     <string name="settings_initial">Початковий залишок, л</string>
+    <string name="settings_manual_consumption">Норма витрати, л/100 км</string>
+    <string name="settings_manual_consumption_hint">Використовується, поки заправок замало для розрахунку. Порожньо — не використовувати.</string>
     <string name="settings_rollover">Лічильник обнуляється після, км</string>
     <string name="settings_rollover_hint">Наприклад, 1000 — якщо лічильник рахує до 999,9 і починає з нуля. 0 — якщо не обнуляється.</string>
     <string name="settings_initial_hint">Скільки пального було в баку перед першою записаною заправкою</string>
