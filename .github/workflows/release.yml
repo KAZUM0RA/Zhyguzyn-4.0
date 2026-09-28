@@ -1,10 +1,22 @@
 name: Release
 
-# Запускається при пуші тегу версії, наприклад: git tag v1.2.3 && git push origin v1.2.3
+# Запуск двома способами:
+#  1) пуш тегу версії: git tag -a v1.2.3 -m "Що нового" && git push origin v1.2.3
+#  2) вручну: Actions → Release → Run workflow → вказати версію (тег створиться сам)
 on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Версія у форматі v1.2.3'
+        required: true
+        type: string
+      notes:
+        description: 'Що нового (необов’язково; якщо порожньо — GitHub згенерує нотатки)'
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -17,7 +29,8 @@ jobs:
   release:
     runs-on: ubuntu-latest
     env:
-      TAG: ${{ github.ref_name }}
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+      INPUT_NOTES: ${{ inputs.notes }}
     steps:
       - name: Перевірити формат тегу
         run: |
@@ -29,6 +42,14 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+
+      - name: Перевірити, що такої версії ще немає
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null; then
+            echo "::error::Тег $TAG уже існує — вкажіть більшу версію"
+            exit 1
+          fi
 
       - name: Перевірити секрети підпису
         env:
@@ -91,19 +112,31 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Опис змін: повідомлення анотованого тегу, інакше — автоматичні нотатки GitHub.
-          git fetch --force origin "refs/tags/$TAG:refs/tags/$TAG"
-          NOTES=""
-          if [ "$(git cat-file -t "$TAG")" = "tag" ]; then
-            NOTES=$(git tag -l --format='%(contents)' "$TAG" | sed '/-----BEGIN PGP SIGNATURE-----/,$d')
-          fi
+          APK="dist/zhyguzyn-$TAG.apk"
           if gh release view "$TAG" > /dev/null 2>&1; then
-            gh release upload "$TAG" "dist/zhyguzyn-$TAG.apk" --clobber
-          elif [ -n "$(echo "$NOTES" | tr -d '[:space:]')" ]; then
-            gh release create "$TAG" "dist/zhyguzyn-$TAG.apk" --title "$TAG" --notes "$NOTES" --verify-tag
-          else
-            gh release create "$TAG" "dist/zhyguzyn-$TAG.apk" --title "$TAG" --generate-notes --verify-tag
+            gh release upload "$TAG" "$APK" --clobber
+            exit 0
           fi
+          ARGS=("$TAG" "$APK" --title "$TAG")
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            # Тег створює сам GitHub на поточному коміті.
+            NOTES="$INPUT_NOTES"
+            ARGS+=(--target "$GITHUB_SHA")
+          else
+            # Опис змін — повідомлення анотованого тегу.
+            git fetch --force origin "refs/tags/$TAG:refs/tags/$TAG"
+            NOTES=""
+            if [ "$(git cat-file -t "$TAG")" = "tag" ]; then
+              NOTES=$(git tag -l --format='%(contents)' "$TAG" | sed '/-----BEGIN PGP SIGNATURE-----/,$d')
+            fi
+            ARGS+=(--verify-tag)
+          fi
+          if [ -n "$(echo "$NOTES" | tr -d '[:space:]')" ]; then
+            ARGS+=(--notes "$NOTES")
+          else
+            ARGS+=(--generate-notes)
+          fi
+          gh release create "${ARGS[@]}"
 
       - name: Прибрати keystore
         if: always()
