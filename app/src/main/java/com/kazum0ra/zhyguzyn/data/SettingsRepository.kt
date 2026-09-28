@@ -21,6 +21,7 @@ class SettingsRepository(context: Context) {
     private object Keys {
         val TANK_CAPACITY = doublePreferencesKey("tank_capacity_liters")
         val INITIAL_FUEL = doublePreferencesKey("initial_fuel_liters")
+        val ODOMETER_ROLLOVER = doublePreferencesKey("odometer_rollover_km")
         val LAST_UPDATE_CHECK = longPreferencesKey("last_update_check_millis")
     }
 
@@ -28,6 +29,7 @@ class SettingsRepository(context: Context) {
         TankSettings(
             capacityLiters = prefs[Keys.TANK_CAPACITY] ?: TankSettings.DEFAULT.capacityLiters,
             initialFuelLiters = prefs[Keys.INITIAL_FUEL] ?: TankSettings.DEFAULT.initialFuelLiters,
+            odometerRolloverKm = prefs[Keys.ODOMETER_ROLLOVER] ?: TankSettings.DEFAULT.odometerRolloverKm,
         )
     }
 
@@ -35,6 +37,7 @@ class SettingsRepository(context: Context) {
         store.edit { prefs ->
             prefs[Keys.TANK_CAPACITY] = settings.capacityLiters
             prefs[Keys.INITIAL_FUEL] = settings.initialFuelLiters
+            prefs[Keys.ODOMETER_ROLLOVER] = settings.odometerRolloverKm
         }
     }
 

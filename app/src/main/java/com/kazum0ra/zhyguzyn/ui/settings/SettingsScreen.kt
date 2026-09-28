@@ -62,6 +62,10 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         private set
     var initialError by mutableStateOf<InputError?>(null)
         private set
+    var rollover by mutableStateOf("")
+        private set
+    var rolloverError by mutableStateOf<InputError?>(null)
+        private set
     /** Лічильник успішних збережень — для показу повідомлення. */
     var savedCount by mutableStateOf(0)
         private set
@@ -71,6 +75,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             val settings = container.settingsRepository.tankSettings.first()
             capacity = Format.editable(settings.capacityLiters)
             initial = Format.editable(settings.initialFuelLiters)
+            rollover = Format.editable(settings.odometerRolloverKm)
             loading = false
         }
     }
@@ -85,11 +90,17 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         initialError = null
     }
 
+    fun onRolloverChange(value: String) {
+        rollover = value
+        rolloverError = null
+    }
+
     fun save() {
-        when (val result = SettingsValidator.validate(capacity, initial)) {
+        when (val result = SettingsValidator.validate(capacity, initial, rollover)) {
             is SettingsValidator.Result.Invalid -> {
                 capacityError = result.capacityError
                 initialError = result.initialError
+                rolloverError = result.rolloverError
             }
             is SettingsValidator.Result.Valid -> viewModelScope.launch {
                 container.settingsRepository.saveTankSettings(result.settings)
@@ -141,6 +152,14 @@ fun SettingsScreen(onBack: () -> Unit) {
                 label = stringResource(R.string.settings_initial),
                 error = viewModel.initialError?.message(),
                 supportingText = stringResource(R.string.settings_initial_hint),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            NumberField(
+                value = viewModel.rollover,
+                onValueChange = viewModel::onRolloverChange,
+                label = stringResource(R.string.settings_rollover),
+                error = viewModel.rolloverError?.message(),
+                supportingText = stringResource(R.string.settings_rollover_hint),
                 imeAction = ImeAction.Done,
                 modifier = Modifier.fillMaxWidth(),
             )

@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kazum0ra.zhyguzyn.AppContainer
+import com.kazum0ra.zhyguzyn.FuelOverview
 import com.kazum0ra.zhyguzyn.R
 import com.kazum0ra.zhyguzyn.domain.InputError
 import com.kazum0ra.zhyguzyn.domain.Refuel
@@ -108,13 +109,17 @@ class EntryViewModel(
                 }
                 loading = false
             }
-            updatePreviousOdometer(overview.refuels)
+            updatePreviousOdometer(overview)
         }
     }
 
-    private fun updatePreviousOdometer(refuels: List<Refuel>) {
-        previousOdometer = RefuelValidator.neighbours(refuels, editingId, date).first
-            .maxOfOrNull { it.odometerKm }
+    private fun updatePreviousOdometer(overview: FuelOverview) {
+        previousOdometer = RefuelValidator.previousOdometer(
+            overview.refuels,
+            editingId,
+            date,
+            overview.settings.odometerRolloverKm,
+        )
     }
 
     fun onOdometerChange(value: String) {
@@ -134,7 +139,7 @@ class EntryViewModel(
     fun onDateChange(value: LocalDate) {
         date = value
         odometerError = null
-        viewModelScope.launch { updatePreviousOdometer(container.overview.first().refuels) }
+        viewModelScope.launch { updatePreviousOdometer(container.overview.first()) }
     }
 
     fun save() {
@@ -147,6 +152,7 @@ class EntryViewModel(
                 existing = overview.refuels,
                 editingId = editingId,
                 tankCapacityLiters = overview.settings.capacityLiters,
+                odometerRolloverKm = overview.settings.odometerRolloverKm,
             )
             when (result) {
                 is RefuelValidator.Result.Invalid -> {

@@ -33,7 +33,11 @@ class AppContainer(app: Application) {
     /** Заправки, налаштування і розрахована статистика — перераховується після кожної зміни. */
     val overview: Flow<FuelOverview> =
         combine(fuelRepository.refuels, settingsRepository.tankSettings) { refuels, settings ->
-            FuelOverview(refuels, settings, FuelCalculator.calculate(refuels, settings))
+            FuelOverview(
+                refuels = FuelCalculator.sortChronologically(refuels, settings.odometerRolloverKm).asReversed(),
+                settings = settings,
+                stats = FuelCalculator.calculate(refuels, settings),
+            )
         }
 }
 

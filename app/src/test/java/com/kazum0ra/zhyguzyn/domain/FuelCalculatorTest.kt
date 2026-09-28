@@ -261,4 +261,84 @@ class FuelCalculatorTest {
         val stats = FuelCalculator.calculate(listOf(refuel(0.0, 10.0)), TankSettings(-5.0, 0.0))
         assertClose(0.0, stats.fuelAfterLastRefuel)
     }
+
+    // --- Лічильник, що обнуляється після 1000 км ---
+
+    private val trip = TankSettings(capacityLiters = 50.0, initialFuelLiters = 10.0, odometerRolloverKm = 1000.0)
+
+    @Test
+    fun `distance wraps around the rollover point`() {
+        assertEquals(150.0, FuelCalculator.distanceKm(900.0, 50.0, 1000.0), 1e-9)
+        assertEquals(100.0, FuelCalculator.distanceKm(200.0, 300.0, 1000.0), 1e-9)
+        assertEquals(0.0, FuelCalculator.distanceKm(420.0, 420.0, 1000.0), 1e-9)
+        assertEquals(150.1, FuelCalculator.distanceKm(950.2, 100.3, 1000.0), 1e-9)
+        // Без обнулення — звичайна різниця.
+        assertEquals(500.0, FuelCalculator.distanceKm(10_000.0, 10_500.0, 0.0), 1e-9)
+    }
+
+    @Test
+    fun `consumption across counter reset`() {
+        val stats = FuelCalculator.calculate(
+            listOf(
+                refuel(700.0, 40.0), // день 1
+                refuel(200.0, 35.0), // день 2: 700 → 999,9 → 0 → 200 = 500 км
+            ),
+            trip,
+        )
+        assertClose(7.0, stats.averageConsumption)
+        assertClose(50.0, stats.fuelAfterLastRefuel)
+        assertEquals(200.0, stats.lastOdometerKm!!, 0.0)
+    }
+
+    @Test
+    fun `several resets with partial refuel in between`() {
+        val stats = FuelCalculator.calculate(
+            listOf(
+                refuel(800.0, 45.0, full = true),
+                refuel(100.0, 20.0, full = false), // +300
+                refuel(500.0, 25.0, full = true), // +400, разом 700 км, 45 л
+                refuel(100.0, 36.0, full = true), // +600
+            ),
+            trip,
+        )
+        assertEquals(2, stats.intervals.size)
+        assertClose(45.0 / 700.0 * 100.0, stats.intervals[0].litersPer100Km)
+        assertClose(6.0, stats.lastIntervalConsumption)
+        assertClose(81.0 / 1300.0 * 100.0, stats.averageConsumption)
+    }
+
+    @Test
+    fun `with rollover refuels are ordered by date, not by counter value`() {
+        val late = refuel(100.0, 30.0, day = 5)
+        val early = refuel(600.0, 40.0, day = 1)
+        val stats = FuelCalculator.calculate(listOf(late, early), trip)
+        // 600 → 100 через нуль = 500 км
+        assertClose(6.0, stats.averageConsumption)
+        assertEquals(100.0, stats.lastOdometerKm!!, 0.0)
+    }
+
+    private fun tripStats() = FuelCalculator.calculate(
+        listOf(refuel(700.0, 40.0), refuel(200.0, 40.0)), // 8 л/100, останній показник 200
+        trip,
+    )
+
+    @Test
+    fun `estimate by counter reading after reset`() {
+        val result = FuelCalculator.estimateByOdometer(tripStats(), 450.0) as Estimate.Ok
+        assertClose(250.0, result.distanceKm)
+        assertClose(30.0, result.fuelLeftLiters)
+        // Лічильник уже пройшов через нуль: 200 → 999,9 → 0 → 100 = 900 км, бак порожній.
+        val wrapped = FuelCalculator.estimateByOdometer(tripStats(), 100.0) as Estimate.Ok
+        assertClose(900.0, wrapped.distanceKm)
+        assertClose(0.0, wrapped.fuelLeftLiters)
+    }
+
+    @Test
+    fun `estimate rejects counter reading at or above rollover`() {
+        assertEquals(
+            Estimate.Invalid(InputError.ODOMETER_ABOVE_ROLLOVER, 1000.0),
+            FuelCalculator.estimateByOdometer(tripStats(), 1000.0),
+        )
+        assertEquals(Estimate.Invalid(InputError.NEGATIVE), FuelCalculator.estimateByOdometer(tripStats(), -5.0))
+    }
 }

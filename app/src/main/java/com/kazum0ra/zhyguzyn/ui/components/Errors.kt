@@ -17,6 +17,7 @@ fun InputError.message(limitKm: Double? = null): String {
         InputError.ODOMETER_LESS_THAN_PREVIOUS -> stringResource(R.string.error_odometer_less_than_previous, limit)
         InputError.ODOMETER_GREATER_THAN_NEXT -> stringResource(R.string.error_odometer_greater_than_next, limit)
         InputError.ODOMETER_BELOW_LAST_REFUEL -> stringResource(R.string.error_odometer_below_last, limit)
+        InputError.ODOMETER_ABOVE_ROLLOVER -> stringResource(R.string.error_odometer_above_rollover, limit)
         InputError.EXCEEDS_TANK -> stringResource(R.string.error_exceeds_tank)
         InputError.TOO_LARGE -> stringResource(R.string.error_too_large)
     }

@@ -140,6 +140,42 @@ class InputValidationTest {
         assertEquals(RefuelValidator.Result.Valid(5.0, 10.0), result)
     }
 
+    // --- Лічильник, що обнуляється ---
+
+    @Test
+    fun `with rollover a smaller reading than previous is allowed`() {
+        val trip = listOf(Refuel(id = 1, date = day1, odometerKm = 900.0, liters = 40.0, fullTank = true))
+        assertEquals(
+            RefuelValidator.Result.Valid(150.0, 35.0),
+            RefuelValidator.validate("150", "35", day2, trip, null, 50.0, odometerRolloverKm = 1000.0),
+        )
+    }
+
+    @Test
+    fun `with rollover the reading must be below the rollover point`() {
+        val result = RefuelValidator.validate("1000", "35", day2, emptyList(), null, 50.0, 1000.0)
+            as RefuelValidator.Result.Invalid
+        assertEquals(InputError.ODOMETER_ABOVE_ROLLOVER, result.odometerError)
+        assertEquals(1000.0, result.odometerLimitKm!!, 0.0)
+        assertTrue(
+            RefuelValidator.validate("999,9", "35", day2, emptyList(), null, 50.0, 1000.0)
+                is RefuelValidator.Result.Valid,
+        )
+    }
+
+    @Test
+    fun `previous reading hint follows date order with rollover`() {
+        val trip = listOf(
+            Refuel(id = 1, date = day1, odometerKm = 900.0, liters = 40.0, fullTank = true),
+            Refuel(id = 2, date = day2, odometerKm = 150.0, liters = 35.0, fullTank = true),
+        )
+        assertEquals(150.0, RefuelValidator.previousOdometer(trip, null, day3, 1000.0)!!, 0.0)
+        assertEquals(900.0, RefuelValidator.previousOdometer(trip, 2, day2, 1000.0)!!, 0.0)
+        assertEquals(null, RefuelValidator.previousOdometer(trip, 1, day1, 1000.0))
+        // Без обнулення — найбільший попередній пробіг.
+        assertEquals(2_000.0, RefuelValidator.previousOdometer(existing, null, day3.plusDays(1), 0.0)!!, 0.0)
+    }
+
     // --- Налаштування ---
 
     @Test
@@ -153,6 +189,19 @@ class InputValidationTest {
     @Test
     fun `empty initial fuel means zero`() {
         assertEquals(SettingsValidator.Result.Valid(TankSettings(40.0, 0.0)), SettingsValidator.validate("40", ""))
+    }
+
+    @Test
+    fun `rollover setting`() {
+        assertEquals(
+            SettingsValidator.Result.Valid(TankSettings(40.0, 5.0, 1000.0)),
+            SettingsValidator.validate("40", "5", "1000"),
+        )
+        assertEquals(SettingsValidator.Result.Valid(TankSettings(40.0, 5.0, 0.0)), SettingsValidator.validate("40", "5", ""))
+        assertEquals(
+            SettingsValidator.Result.Invalid(null, null, InputError.NEGATIVE),
+            SettingsValidator.validate("40", "5", "-1"),
+        )
     }
 
     @Test

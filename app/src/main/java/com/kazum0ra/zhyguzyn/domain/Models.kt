@@ -11,33 +11,41 @@ data class Refuel(
     val fullTank: Boolean,
 )
 
-/** Налаштування бака. */
+/** Налаштування бака та лічильника пробігу. */
 data class TankSettings(
     val capacityLiters: Double,
     val initialFuelLiters: Double,
+    /**
+     * Після якого значення лічильник обнуляється (наприклад, 1000 для лічильника 0–999,9).
+     * 0 — лічильник не обнуляється (звичайний одометр).
+     */
+    val odometerRolloverKm: Double = 0.0,
 ) {
+    val hasRollover: Boolean get() = odometerRolloverKm > 0.0
+
     companion object {
-        val DEFAULT = TankSettings(capacityLiters = 50.0, initialFuelLiters = 0.0)
+        val DEFAULT = TankSettings(capacityLiters = 50.0, initialFuelLiters = 0.0, odometerRolloverKm = 1000.0)
     }
 }
 
 /** Інтервал «від повного бака до повного бака». */
 data class ConsumptionInterval(
-    val fromOdometerKm: Double,
-    val toOdometerKm: Double,
     /** Заправка до повного, якою завершується інтервал. */
     val endRefuelId: Long,
+    /** Пройдено км (з урахуванням обнулення лічильника). */
+    val distanceKm: Double,
     val liters: Double,
 ) {
-    val distanceKm: Double get() = toOdometerKm - fromOdometerKm
     val litersPer100Km: Double get() = liters / distanceKm * 100.0
 }
 
 /** Результат розрахунку за всіма заправками. */
 data class FuelStats(
     val capacityLiters: Double,
+    /** Значення, після якого лічильник обнуляється; 0 — не обнуляється. */
+    val odometerRolloverKm: Double,
     val refuelCount: Int,
-    /** Пробіг на момент останньої заправки. */
+    /** Показник лічильника на момент останньої заправки. */
     val lastOdometerKm: Double?,
     val intervals: List<ConsumptionInterval>,
     /** Витрата за останній інтервал, л/100 км; null — даних замало. */
@@ -88,6 +96,8 @@ enum class InputError {
     ODOMETER_GREATER_THAN_NEXT,
     /** Поточний пробіг менший за пробіг останньої заправки. */
     ODOMETER_BELOW_LAST_REFUEL,
+    /** Показник більший за межу, на якій лічильник обнуляється. */
+    ODOMETER_ABOVE_ROLLOVER,
     EXCEEDS_TANK,
     TOO_LARGE,
 }

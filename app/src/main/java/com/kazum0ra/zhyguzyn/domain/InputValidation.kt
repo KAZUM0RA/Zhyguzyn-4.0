@@ -41,6 +41,9 @@ object RefuelValidator {
     /**
      * @param existing усі збережені заправки
      * @param editingId id запису, що редагується (його не порівнюємо сам із собою)
+     * @param odometerRolloverKm після якого значення лічильник обнуляється; 0 — не обнуляється.
+     *   Якщо обнуляється, показник може бути меншим за попередній (лічильник пройшов через нуль),
+     *   тому перевіряється лише, що він у межах лічильника.
      */
     fun validate(
         odometerText: String,
@@ -49,6 +52,7 @@ object RefuelValidator {
         existing: List<Refuel>,
         editingId: Long?,
         tankCapacityLiters: Double,
+        odometerRolloverKm: Double = 0.0,
     ): Result {
         var odometerError: InputError? = null
         var odometerLimit: Double? = null
@@ -60,6 +64,10 @@ object RefuelValidator {
                 when {
                     odometer < 0.0 -> odometerError = InputError.NEGATIVE
                     odometer > MAX_ODOMETER_KM -> odometerError = InputError.TOO_LARGE
+                    odometerRolloverKm > 0.0 -> if (odometer >= odometerRolloverKm) {
+                        odometerError = InputError.ODOMETER_ABOVE_ROLLOVER
+                        odometerLimit = odometerRolloverKm
+                    }
                     else -> {
                         val (before, after) = neighbours(existing, editingId, date)
                         val previous = before.maxOfOrNull { it.odometerKm }
@@ -115,6 +123,26 @@ object RefuelValidator {
         }
         return before to after
     }
+
+    /** Показник попередньої заправки — підказка під полем вводу. */
+    fun previousOdometer(
+        existing: List<Refuel>,
+        editingId: Long?,
+        date: LocalDate,
+        odometerRolloverKm: Double,
+    ): Double? {
+        if (odometerRolloverKm > 0.0) {
+            val others = existing.filter { it.id != editingId }
+            val sorted = FuelCalculator.sortChronologically(others, odometerRolloverKm)
+            val original = existing.firstOrNull { it.id == editingId }
+            return if (original != null && original.date == date) {
+                sorted.lastOrNull { it.date < date || (it.date == date && it.id < original.id) }
+            } else {
+                sorted.lastOrNull { it.date <= date }
+            }?.odometerKm
+        }
+        return neighbours(existing, editingId, date).first.maxOfOrNull { it.odometerKm }
+    }
 }
 
 /** Перевірка налаштувань бака. */
@@ -124,10 +152,18 @@ object SettingsValidator {
 
     sealed interface Result {
         data class Valid(val settings: TankSettings) : Result
-        data class Invalid(val capacityError: InputError?, val initialError: InputError?) : Result
+        data class Invalid(
+            val capacityError: InputError?,
+            val initialError: InputError?,
+            val rolloverError: InputError? = null,
+        ) : Result
     }
 
-    fun validate(capacityText: String, initialText: String): Result {
+    /** Максимальне значення, на якому лічильник може обнулятися. */
+    const val MAX_ROLLOVER_KM = 1_000_000.0
+
+    /** @param rolloverText після якого значення лічильник обнуляється; порожньо або 0 — не обнуляється. */
+    fun validate(capacityText: String, initialText: String, rolloverText: String = ""): Result {
         var capacityError: InputError? = null
         var capacity = 0.0
         when (val parsed = NumberParser.parse(capacityText)) {
@@ -153,10 +189,23 @@ object SettingsValidator {
             }
         }
 
-        return if (capacityError == null && initialError == null) {
-            Result.Valid(TankSettings(capacity, initial))
+        var rolloverError: InputError? = null
+        var rollover = 0.0
+        if (rolloverText.isNotBlank()) {
+            when (val parsed = NumberParser.parse(rolloverText)) {
+                is NumberParser.Result.Error -> rolloverError = parsed.error
+                is NumberParser.Result.Ok -> {
+                    rollover = parsed.value
+                    if (rollover < 0.0) rolloverError = InputError.NEGATIVE
+                    else if (rollover > MAX_ROLLOVER_KM) rolloverError = InputError.TOO_LARGE
+                }
+            }
+        }
+
+        return if (capacityError == null && initialError == null && rolloverError == null) {
+            Result.Valid(TankSettings(capacity, initial, rollover))
         } else {
-            Result.Invalid(capacityError, initialError)
+            Result.Invalid(capacityError, initialError, rolloverError)
         }
     }
 }
