@@ -62,6 +62,10 @@ data class FuelStats(
     /** Значення, після якого лічильник обнуляється; 0 — не обнуляється. */
     val odometerRolloverKm: Double,
     val refuelCount: Int,
+    /** Весь пробіг від першої до останньої заправки, км. */
+    val totalDistanceKm: Double = 0.0,
+    /** Усього залито пального, л. */
+    val totalLiters: Double = 0.0,
     /** Показник лічильника на момент останньої заправки. */
     val lastOdometerKm: Double?,
     val intervals: List<ConsumptionInterval>,

@@ -4,30 +4,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -39,51 +24,38 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.kazum0ra.zhyguzyn.AppContainer
+import com.kazum0ra.zhyguzyn.FuelOverview
 import com.kazum0ra.zhyguzyn.R
 import com.kazum0ra.zhyguzyn.domain.ConsumptionSource
-import com.kazum0ra.zhyguzyn.domain.FuelStats
+import com.kazum0ra.zhyguzyn.domain.Refuel
+import com.kazum0ra.zhyguzyn.ui.components.AppCard
+import com.kazum0ra.zhyguzyn.ui.components.BackTopBar
+import com.kazum0ra.zhyguzyn.ui.components.BigActionButton
 import com.kazum0ra.zhyguzyn.ui.components.Format
 import com.kazum0ra.zhyguzyn.ui.components.FuelGauge
+import com.kazum0ra.zhyguzyn.ui.components.ValueColumn
 import com.kazum0ra.zhyguzyn.ui.components.appViewModel
+import com.kazum0ra.zhyguzyn.ui.theme.AppColors
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class HomeViewModel(container: AppContainer) : ViewModel() {
     /** null — дані ще завантажуються. */
-    val stats: StateFlow<FuelStats?> = container.overview
-        .map { it.stats }
+    val overview: StateFlow<FuelOverview?> = container.overview
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
-    onAddRefuel: () -> Unit,
-    onEstimate: () -> Unit,
-    onHistory: () -> Unit,
-    onSettings: () -> Unit,
-) {
+fun HomeScreen(onAddRefuel: () -> Unit, onEstimate: () -> Unit) {
     val viewModel = appViewModel { HomeViewModel(it) }
-    val stats by viewModel.stats.collectAsStateWithLifecycle()
+    val overview by viewModel.overview.collectAsStateWithLifecycle()
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.home_title)) },
-                actions = {
-                    IconButton(onClick = onHistory) {
-                        Icon(Icons.AutoMirrored.Filled.List, contentDescription = stringResource(R.string.home_history))
-                    }
-                    IconButton(onClick = onSettings) {
-                        Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.home_settings))
-                    }
-                },
-            )
-        },
+        topBar = { BackTopBar(stringResource(R.string.home_title), onBack = null) },
+        containerColor = AppColors.Background,
     ) { padding ->
-        val current = stats
+        val current = overview
         if (current == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
@@ -95,54 +67,22 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            LastRefuelCard(current.refuels.firstOrNull())
             FuelCard(current)
-            StatsCard(current)
-
-            Button(onClick = onAddRefuel, modifier = Modifier.fillMaxWidth().height(56.dp)) {
-                Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.size(8.dp))
-                Text(stringResource(R.string.home_add))
-            }
-            OutlinedButton(
-                onClick = onEstimate,
-                enabled = current.hasEntries,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-            ) {
-                Text(stringResource(R.string.home_estimate))
-            }
-        }
-    }
-}
-
-@Composable
-private fun FuelCard(stats: FuelStats) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.home_fuel_left), style = MaterialTheme.typography.titleMedium)
-            val fuel = stats.fuelAfterLastRefuel
-            if (!stats.hasEntries) {
-                Text(stringResource(R.string.home_no_entries), style = MaterialTheme.typography.bodyMedium)
-                return@Column
-            }
-            if (fuel != null) {
-                Text(
-                    stringResource(R.string.home_fuel_value, Format.liters(fuel), Format.liters(stats.capacityLiters)),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.SemiBold,
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                BigActionButton(
+                    text = stringResource(R.string.home_add),
+                    onClick = onAddRefuel,
+                    modifier = Modifier.weight(1f),
                 )
-            } else {
-                Text(stringResource(R.string.home_fuel_unknown), style = MaterialTheme.typography.titleLarge)
-            }
-            val fraction = if (fuel != null && stats.capacityLiters > 0) (fuel / stats.capacityLiters).toFloat() else null
-            FuelGauge(fraction)
-            stats.lastOdometerKm?.let {
-                Text(
-                    stringResource(R.string.home_fuel_left_at, Format.km(it)),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                BigActionButton(
+                    text = stringResource(R.string.home_estimate),
+                    onClick = onEstimate,
+                    enabled = current.stats.hasEntries,
+                    modifier = Modifier.weight(1f),
                 )
             }
         }
@@ -150,58 +90,111 @@ private fun FuelCard(stats: FuelStats) {
 }
 
 @Composable
-private fun StatsCard(stats: FuelStats) {
-    if (!stats.hasEntries) return
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            val average = stats.averageConsumption
-            if (average == null) {
-                Text(stringResource(R.string.home_not_enough_data), style = MaterialTheme.typography.bodyMedium)
-                return@Column
-            }
-            StatRow(
-                label = stringResource(R.string.home_avg),
-                value = "${Format.consumption(average)} ${stringResource(R.string.unit_l100)}",
-                hint = when (stats.consumptionSource) {
-                    ConsumptionSource.FULL_TO_FULL -> stringResource(R.string.home_source_full)
-                    ConsumptionSource.ALL_REFUELS -> stringResource(R.string.home_source_all)
-                    ConsumptionSource.MANUAL -> stringResource(R.string.home_source_manual)
-                    null -> null
-                },
+private fun LastRefuelCard(last: Refuel?) {
+    AppCard {
+        if (last == null) {
+            Text(
+                stringResource(R.string.home_no_entries),
+                style = MaterialTheme.typography.bodyLarge,
+                color = AppColors.TextSecondary,
             )
-            stats.lastIntervalConsumption?.let {
-                StatRow(
-                    label = stringResource(R.string.home_last_interval),
-                    value = "${Format.consumption(it)} ${stringResource(R.string.unit_l100)}",
-                )
-            }
-            stats.rangeKm?.let {
-                StatRow(
-                    label = stringResource(R.string.home_range),
-                    value = "≈ ${Format.km(Math.round(it).toDouble())} ${stringResource(R.string.unit_km)}",
-                    hint = stringResource(R.string.home_range_hint),
-                )
-            }
+            return@AppCard
         }
+        Text(
+            stringResource(R.string.home_last_refuel, Format.date(last.date)),
+            style = MaterialTheme.typography.titleMedium,
+            color = AppColors.TextSecondary,
+        )
+        Text(
+            stringResource(
+                R.string.home_last_refuel_details,
+                Format.km(last.odometerKm),
+                Format.liters(last.liters),
+                stringResource(if (last.fullTank) R.string.history_full else R.string.history_partial),
+            ),
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(top = 4.dp),
+        )
     }
 }
 
 @Composable
-private fun StatRow(label: String, value: String, hint: String? = null) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text(label, style = MaterialTheme.typography.bodyLarge)
-            if (hint != null) {
+private fun FuelCard(overview: FuelOverview) {
+    val stats = overview.stats
+    val unitL100 = stringResource(R.string.unit_l100)
+    AppCard {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(R.string.home_fuel),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                stringResource(R.string.home_tank, Format.liters(stats.capacityLiters)),
+                style = MaterialTheme.typography.titleMedium,
+                color = AppColors.TextSecondary,
+            )
+        }
+
+        val fuel = stats.fuelAfterLastRefuel
+        val fraction = if (fuel != null && stats.capacityLiters > 0) (fuel / stats.capacityLiters).toFloat() else null
+        Row(
+            verticalAlignment = Alignment.Bottom,
+            modifier = Modifier.padding(top = 16.dp, bottom = 16.dp),
+        ) {
+            Text(
+                if (fuel != null) "≈ ${Format.liters(fuel)} ${stringResource(R.string.unit_liters)}" else "—",
+                style = MaterialTheme.typography.displayMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+            if (fraction != null) {
                 Text(
-                    hint,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
+                    "  ≈ ${(fraction.coerceIn(0f, 1f) * 100).toInt()}%",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = AppColors.TextSecondary,
+                    modifier = Modifier.padding(bottom = 4.dp),
                 )
             }
         }
-        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+        FuelGauge(fraction)
+
+        if (stats.hasEntries) {
+            Row(Modifier.fillMaxWidth().padding(top = 20.dp)) {
+                ValueColumn(
+                    label = stringResource(R.string.home_range),
+                    value = stats.rangeKm
+                        ?.let { "≈ ${Format.km(Math.round(it).toDouble())} ${stringResource(R.string.unit_km)}" }
+                        ?: "—",
+                    modifier = Modifier.weight(1f),
+                )
+                ValueColumn(
+                    label = stringResource(R.string.home_avg),
+                    value = stats.averageConsumption?.let { "≈ ${Format.consumption(it)} $unitL100" } ?: "—",
+                    hint = when (stats.consumptionSource) {
+                        ConsumptionSource.FULL_TO_FULL -> stringResource(R.string.home_source_full)
+                        ConsumptionSource.ALL_REFUELS -> stringResource(R.string.home_source_all)
+                        ConsumptionSource.MANUAL -> stringResource(R.string.home_source_manual)
+                        null -> null
+                    },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+
+        val last = overview.refuels.firstOrNull()
+        val note = when {
+            last == null -> null
+            stats.averageConsumption == null -> stringResource(R.string.home_not_enough_data)
+            else -> stringResource(R.string.home_estimate_note, Format.shortDate(last.date), Format.km(last.odometerKm))
+        }
+        if (note != null) {
+            Text(
+                note,
+                style = MaterialTheme.typography.bodyMedium,
+                color = AppColors.TextSecondary,
+                modifier = Modifier.padding(top = 16.dp),
+            )
+        }
     }
 }

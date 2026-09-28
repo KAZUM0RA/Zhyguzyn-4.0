@@ -1,6 +1,15 @@
 package com.kazum0ra.zhyguzyn.ui.history
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import com.kazum0ra.zhyguzyn.ui.theme.AppColors
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -9,14 +18,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -55,12 +62,15 @@ class HistoryViewModel(private val container: AppContainer) : ViewModel() {
 }
 
 @Composable
-fun HistoryScreen(onBack: () -> Unit, onEdit: (Long) -> Unit) {
+fun HistoryScreen(onEdit: (Long) -> Unit) {
     val viewModel = appViewModel { HistoryViewModel(it) }
     val overview by viewModel.overview.collectAsStateWithLifecycle()
     var toDelete by remember { mutableStateOf<Refuel?>(null) }
 
-    Scaffold(topBar = { BackTopBar(stringResource(R.string.history_title), onBack) }) { padding ->
+    Scaffold(
+        topBar = { BackTopBar(stringResource(R.string.history_title), onBack = null) },
+        containerColor = AppColors.Background,
+    ) { padding ->
         val current = overview
         when {
             current == null -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
@@ -71,7 +81,8 @@ fun HistoryScreen(onBack: () -> Unit, onEdit: (Long) -> Unit) {
             }
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(bottom = 16.dp),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 items(current.refuels, key = { it.id }) { refuel ->
                     RefuelItem(
@@ -80,7 +91,6 @@ fun HistoryScreen(onBack: () -> Unit, onEdit: (Long) -> Unit) {
                         onEdit = { onEdit(refuel.id) },
                         onDelete = { toDelete = refuel },
                     )
-                    HorizontalDivider()
                 }
             }
         }
@@ -115,26 +125,38 @@ fun HistoryScreen(onBack: () -> Unit, onEdit: (Long) -> Unit) {
 
 @Composable
 private fun RefuelItem(refuel: Refuel, consumption: Double?, onEdit: () -> Unit, onDelete: () -> Unit) {
-    ListItem(
-        modifier = Modifier.clickable(onClick = onEdit),
-        overlineContent = { Text(Format.date(refuel.date)) },
-        headlineContent = {
-            Text(stringResource(R.string.history_item_title, Format.km(refuel.odometerKm), Format.liters(refuel.liters)))
-        },
-        supportingContent = {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(AppColors.Card)
+            .border(1.dp, AppColors.CardBorder, RoundedCornerShape(20.dp))
+            .clickable(onClick = onEdit)
+            .padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(Format.date(refuel.date), style = MaterialTheme.typography.bodyMedium, color = AppColors.TextSecondary)
+            Text(
+                stringResource(R.string.history_item_title, Format.km(refuel.odometerKm), Format.liters(refuel.liters)),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium,
+            )
             val tank = stringResource(if (refuel.fullTank) R.string.history_full else R.string.history_partial)
-            val text = consumption?.let { "$tank · ${stringResource(R.string.history_consumption, Format.consumption(it))}" } ?: tank
-            Text(text)
-        },
-        trailingContent = {
-            Row {
-                IconButton(onClick = onEdit) {
-                    Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.edit))
-                }
-                IconButton(onClick = onDelete) {
-                    Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete))
-                }
-            }
-        },
-    )
+            val text = consumption
+                ?.let { "$tank · ${stringResource(R.string.history_consumption, Format.consumption(it))}" }
+                ?: tank
+            Text(
+                text,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (refuel.fullTank) AppColors.Green else AppColors.TextSecondary,
+            )
+        }
+        IconButton(onClick = onEdit) {
+            Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.edit), tint = AppColors.TextSecondary)
+        }
+        IconButton(onClick = onDelete) {
+            Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.delete), tint = AppColors.TextSecondary)
+        }
+    }
 }

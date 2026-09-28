@@ -43,6 +43,8 @@ object FuelCalculator {
             capacityLiters = capacity,
             odometerRolloverKm = rollover,
             refuelCount = sorted.size,
+            totalDistanceKm = steps.sum(),
+            totalLiters = sorted.sumOf { it.liters },
             lastOdometerKm = sorted.lastOrNull()?.odometerKm,
             intervals = intervals,
             lastIntervalConsumption = intervals.lastOrNull()?.litersPer100Km,

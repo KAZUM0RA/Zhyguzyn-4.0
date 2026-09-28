@@ -16,23 +16,41 @@
 
     <!-- Головний -->
     <string name="home_title">Zhyguzyn 4.0</string>
-    <string name="home_history">Історія заправок</string>
-    <string name="home_settings">Налаштування</string>
-    <string name="home_fuel_left">Залишок у баку</string>
-    <string name="home_fuel_left_at">після останньої заправки (%1$s км)</string>
+    <string name="home_fuel">Пальне</string>
+    <string name="home_tank">бак %1$s л</string>
     <string name="home_fuel_value">%1$s з %2$s л</string>
-    <string name="home_fuel_unknown">Залишок поки невідомий</string>
-    <string name="home_avg">Середня витрата</string>
-    <string name="home_last_interval">Останній інтервал</string>
-    <string name="home_range">Запас ходу</string>
-    <string name="home_add">Додати заправку</string>
-    <string name="home_estimate">Прикинути</string>
-    <string name="home_no_entries">Ще немає жодної заправки. Додайте першу — і тут з’явиться статистика.</string>
+    <string name="home_last_refuel">Остання заправка: %1$s</string>
+    <string name="home_last_refuel_details">%1$s км · %2$s л · %3$s</string>
+    <string name="home_avg">Розхід</string>
+    <string name="home_range">Вистачить на</string>
+    <string name="home_add">⛽ Залили пальне</string>
+    <string name="home_estimate">📏 Прикинути</string>
+    <string name="home_no_entries">Ще немає жодної заправки. Натисніть «Залили пальне», щоб додати першу.</string>
     <string name="home_not_enough_data">Для розрахунку витрати потрібні дві заправки «до повного бака» або щонайменше три будь-які заправки. Поки даних замало, можна вказати свою норму витрати в налаштуваннях.</string>
-    <string name="home_source_full">від повного бака до повного</string>
+    <string name="home_source_full">від повного до повного</string>
     <string name="home_source_all">приблизно, за всіма заправками</string>
-    <string name="home_source_manual">ваша норма з налаштувань</string>
-    <string name="home_range_hint">орієнтовно, від місця останньої заправки</string>
+    <string name="home_source_manual">з налаштувань</string>
+    <string name="home_estimate_note">Оцінка на момент заправки %1$s (%2$s км). Скільки зараз — натисніть «Прикинути».</string>
+
+    <!-- Нижнє меню -->
+    <string name="nav_home">Головна</string>
+    <string name="nav_history">Історія</string>
+    <string name="nav_stats">Статистика</string>
+    <string name="nav_settings">Налаштування</string>
+
+    <!-- Статистика -->
+    <string name="stats_title">Статистика</string>
+    <string name="stats_summary">Підсумки</string>
+    <string name="stats_refuels">Заправок</string>
+    <string name="stats_distance">Пройдено</string>
+    <string name="stats_liters">Залито</string>
+    <string name="stats_avg">Середній розхід</string>
+    <string name="stats_best">Найменший розхід</string>
+    <string name="stats_worst">Найбільший розхід</string>
+    <string name="stats_intervals">Від повного бака до повного</string>
+    <string name="stats_intervals_empty">Поки немає жодного інтервалу «від повного до повного». Позначайте «Повний бак», коли заправляєтесь до відсічки.</string>
+    <string name="stats_interval_title">до %1$s</string>
+    <string name="stats_interval_details">%1$s км · %2$s л</string>
 
     <!-- Форма заправки -->
     <string name="entry_add_title">Нова заправка</string>

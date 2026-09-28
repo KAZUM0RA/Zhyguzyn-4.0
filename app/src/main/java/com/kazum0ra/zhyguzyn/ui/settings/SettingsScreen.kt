@@ -40,7 +40,9 @@ import com.kazum0ra.zhyguzyn.GITHUB_REPOSITORY
 import com.kazum0ra.zhyguzyn.R
 import com.kazum0ra.zhyguzyn.domain.InputError
 import com.kazum0ra.zhyguzyn.domain.SettingsValidator
+import com.kazum0ra.zhyguzyn.ui.components.AppCard
 import com.kazum0ra.zhyguzyn.ui.components.BackTopBar
+import com.kazum0ra.zhyguzyn.ui.theme.AppColors
 import com.kazum0ra.zhyguzyn.ui.components.Format
 import com.kazum0ra.zhyguzyn.ui.components.NumberField
 import com.kazum0ra.zhyguzyn.ui.components.appViewModel
@@ -122,7 +124,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
 }
 
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
+fun SettingsScreen() {
     val viewModel = appViewModel { SettingsViewModel(it) }
     val snackbar = remember { SnackbarHostState() }
     val savedText = stringResource(R.string.settings_saved)
@@ -132,7 +134,8 @@ fun SettingsScreen(onBack: () -> Unit) {
     }
 
     Scaffold(
-        topBar = { BackTopBar(stringResource(R.string.settings_title), onBack) },
+        topBar = { BackTopBar(stringResource(R.string.settings_title), onBack = null) },
+        containerColor = AppColors.Background,
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         if (viewModel.loading) {
@@ -147,49 +150,51 @@ fun SettingsScreen(onBack: () -> Unit) {
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            SectionTitle(stringResource(R.string.settings_tank))
-            NumberField(
-                value = viewModel.capacity,
-                onValueChange = viewModel::onCapacityChange,
-                label = stringResource(R.string.settings_capacity),
-                error = viewModel.capacityError?.message(),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            NumberField(
-                value = viewModel.initial,
-                onValueChange = viewModel::onInitialChange,
-                label = stringResource(R.string.settings_initial),
-                error = viewModel.initialError?.message(),
-                supportingText = stringResource(R.string.settings_initial_hint),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            NumberField(
-                value = viewModel.rollover,
-                onValueChange = viewModel::onRolloverChange,
-                label = stringResource(R.string.settings_rollover),
-                error = viewModel.rolloverError?.message(),
-                supportingText = stringResource(R.string.settings_rollover_hint),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            NumberField(
-                value = viewModel.manualConsumption,
-                onValueChange = viewModel::onManualConsumptionChange,
-                label = stringResource(R.string.settings_manual_consumption),
-                error = viewModel.manualConsumptionError?.message(),
-                supportingText = stringResource(R.string.settings_manual_consumption_hint),
-                imeAction = ImeAction.Done,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Button(onClick = viewModel::save, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.save))
+            AppCard(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SectionTitle(stringResource(R.string.settings_tank))
+                NumberField(
+                    value = viewModel.capacity,
+                    onValueChange = viewModel::onCapacityChange,
+                    label = stringResource(R.string.settings_capacity),
+                    error = viewModel.capacityError?.message(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                NumberField(
+                    value = viewModel.initial,
+                    onValueChange = viewModel::onInitialChange,
+                    label = stringResource(R.string.settings_initial),
+                    error = viewModel.initialError?.message(),
+                    supportingText = stringResource(R.string.settings_initial_hint),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                NumberField(
+                    value = viewModel.rollover,
+                    onValueChange = viewModel::onRolloverChange,
+                    label = stringResource(R.string.settings_rollover),
+                    error = viewModel.rolloverError?.message(),
+                    supportingText = stringResource(R.string.settings_rollover_hint),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                NumberField(
+                    value = viewModel.manualConsumption,
+                    onValueChange = viewModel::onManualConsumptionChange,
+                    label = stringResource(R.string.settings_manual_consumption),
+                    error = viewModel.manualConsumptionError?.message(),
+                    supportingText = stringResource(R.string.settings_manual_consumption_hint),
+                    imeAction = ImeAction.Done,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Button(onClick = viewModel::save, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                    Text(stringResource(R.string.save))
+                }
             }
 
-            HorizontalDivider(Modifier.padding(vertical = 16.dp))
-
-            SectionTitle(stringResource(R.string.settings_updates))
-            UpdateSection(viewModel)
+            AppCard(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SectionTitle(stringResource(R.string.settings_updates))
+                UpdateSection(viewModel)
+            }
         }
     }
 }
