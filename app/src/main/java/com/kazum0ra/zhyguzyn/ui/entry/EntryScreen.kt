@@ -113,8 +113,7 @@ class EntryViewModel(
     }
 
     private fun updatePreviousOdometer(refuels: List<Refuel>) {
-        previousOdometer = refuels
-            .filter { it.id != editingId && it.date <= date }
+        previousOdometer = RefuelValidator.neighbours(refuels, editingId, date).first
             .maxOfOrNull { it.odometerKm }
     }
 

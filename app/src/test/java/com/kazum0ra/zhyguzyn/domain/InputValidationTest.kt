@@ -86,6 +86,29 @@ class InputValidationTest {
     }
 
     @Test
+    fun `new refuel on the same day as the last one cannot have smaller odometer`() {
+        val result = validate("1900", "10", date = day3) as RefuelValidator.Result.Invalid
+        assertEquals(InputError.ODOMETER_LESS_THAN_PREVIOUS, result.odometerError)
+        assertEquals(2_000.0, result.odometerLimitKm!!, 0.0)
+        assertTrue(validate("2000", "10", date = day3) is RefuelValidator.Result.Valid)
+    }
+
+    @Test
+    fun `editing keeps the record's place among refuels of the same day`() {
+        val sameDay = existing + Refuel(id = 4, date = day3, odometerKm = 2_300.0, liters = 20.0, fullTank = false)
+        // Запис 3 (2000 км) стоїть перед записом 4 (2300 км) того ж дня: можна змінити в межах 1500..2300.
+        assertTrue(
+            RefuelValidator.validate("2100", "38", day3, sameDay, 3, 50.0) is RefuelValidator.Result.Valid,
+        )
+        val tooBig = RefuelValidator.validate("2400", "38", day3, sameDay, 3, 50.0) as RefuelValidator.Result.Invalid
+        assertEquals(InputError.ODOMETER_GREATER_THAN_NEXT, tooBig.odometerError)
+        assertEquals(2_300.0, tooBig.odometerLimitKm!!, 0.0)
+        // Запис 4 не може стати меншим за запис 3.
+        val tooSmall = RefuelValidator.validate("1990", "20", day3, sameDay, 4, 50.0) as RefuelValidator.Result.Invalid
+        assertEquals(InputError.ODOMETER_LESS_THAN_PREVIOUS, tooSmall.odometerError)
+    }
+
+    @Test
     fun `liters must be positive`() {
         assertEquals(InputError.MUST_BE_POSITIVE, (validate("2500", "0") as RefuelValidator.Result.Invalid).litersError)
         assertEquals(InputError.MUST_BE_POSITIVE, (validate("2500", "-3") as RefuelValidator.Result.Invalid).litersError)

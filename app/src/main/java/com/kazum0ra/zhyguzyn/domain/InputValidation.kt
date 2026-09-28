@@ -61,11 +61,9 @@ object RefuelValidator {
                     odometer < 0.0 -> odometerError = InputError.NEGATIVE
                     odometer > MAX_ODOMETER_KM -> odometerError = InputError.TOO_LARGE
                     else -> {
-                        val others = existing.filter { it.id != editingId }
-                        // Заправки, зроблені раніше за датою, мають менший або рівний пробіг,
-                        // пізніші — більший або рівний. У межах одного дня порядок визначає пробіг.
-                        val previous = others.filter { it.date < date }.maxOfOrNull { it.odometerKm }
-                        val next = others.filter { it.date > date }.minOfOrNull { it.odometerKm }
+                        val (before, after) = neighbours(existing, editingId, date)
+                        val previous = before.maxOfOrNull { it.odometerKm }
+                        val next = after.minOfOrNull { it.odometerKm }
                         if (previous != null && odometer < previous) {
                             odometerError = InputError.ODOMETER_LESS_THAN_PREVIOUS
                             odometerLimit = previous
@@ -96,6 +94,26 @@ object RefuelValidator {
         } else {
             Result.Invalid(odometerError, litersError, odometerLimit)
         }
+    }
+
+    /**
+     * Заправки до й після тієї, що вводиться. Раніші за датою — «до», пізніші — «після».
+     * Заправки того самого дня вважаються попередніми (нову вводять після них),
+     * крім випадку, коли редагується запис без зміни дати: тоді зберігається його
+     * поточне місце серед заправок цього дня.
+     */
+    fun neighbours(existing: List<Refuel>, editingId: Long?, date: LocalDate): Pair<List<Refuel>, List<Refuel>> {
+        val original = existing.firstOrNull { it.id == editingId }
+        val others = existing.filter { it.id != editingId }
+        val before = others.filter { it.date < date }.toMutableList()
+        val after = others.filter { it.date > date }.toMutableList()
+        for (refuel in others.filter { it.date == date }) {
+            val isAfterOriginal = original != null && original.date == date &&
+                (refuel.odometerKm > original.odometerKm ||
+                    (refuel.odometerKm == original.odometerKm && refuel.id > original.id))
+            if (isAfterOriginal) after += refuel else before += refuel
+        }
+        return before to after
     }
 }
 
