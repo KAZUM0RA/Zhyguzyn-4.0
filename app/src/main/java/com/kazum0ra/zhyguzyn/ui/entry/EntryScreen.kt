@@ -75,7 +75,7 @@ class EntryViewModel(
         private set
     var liters by mutableStateOf("")
         private set
-    var fullTank by mutableStateOf(true)
+    var fullTank by mutableStateOf(false)
         private set
     var date: LocalDate by mutableStateOf(LocalDate.now())
         private set
