@@ -147,8 +147,9 @@ gh secret set KEY_PASSWORD
 `v1.2.3` → versionName `1.2.3`, versionCode `1002003`
 (major × 1 000 000 + minor × 1 000 + patch, тож minor і patch мають бути меншими за 1000).
 
+Тег ставиться на останній коміт гілки з кодом:
+
 ```bash
-git checkout main
 git pull
 git tag -a v1.0.0 -m "Що нового:
 - перша версія"
@@ -172,6 +173,14 @@ git push origin :refs/tags/v1.0.0
 git tag -a v1.0.0 -m "..."
 git push origin v1.0.0
 ```
+
+### Збірка на кожен пуш
+
+Workflow `.github/workflows/build.yml` на кожен пуш і pull request проганяє тести та
+збирає APK. Його можна завантажити на вкладці **Actions** → потрібний запуск →
+**Artifacts** → `zhyguzyn-apk`. Якщо секрети підпису задані, APK підписується релізним
+ключем; якщо ні — тимчасовим debug-ключем (такий APK лише для перевірки, оновлюватися
+з Releases він не зможе).
 
 ### Локальна збірка з релізним ключем (необов’язково)
 
