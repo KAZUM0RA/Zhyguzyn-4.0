@@ -43,6 +43,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.kazum0ra.zhyguzyn.AppContainer
 import com.kazum0ra.zhyguzyn.R
 import com.kazum0ra.zhyguzyn.ZhyguzynApp
+import com.kazum0ra.zhyguzyn.domain.OdometerReading
 
 /** ViewModel, що отримує залежності з AppContainer. */
 @Composable
@@ -157,6 +158,21 @@ fun NumberField(
         isError = error != null,
         supportingText = (error ?: supportingText)?.let { { Text(it) } },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = imeAction),
+        modifier = modifier,
+    )
+}
+
+/** Показник лічильника, коли закінчиться пальне: значення і підказка про обнулення. */
+@Composable
+fun EmptyAtColumn(reading: OdometerReading, modifier: Modifier = Modifier) {
+    ValueColumn(
+        label = stringResource(R.string.empty_at),
+        value = stringResource(R.string.empty_at_value, Format.km(Math.round(reading.km).toDouble())),
+        hint = when (reading.resets) {
+            0 -> null
+            1 -> stringResource(R.string.empty_at_one_reset)
+            else -> stringResource(R.string.empty_at_resets, reading.resets)
+        },
         modifier = modifier,
     )
 }

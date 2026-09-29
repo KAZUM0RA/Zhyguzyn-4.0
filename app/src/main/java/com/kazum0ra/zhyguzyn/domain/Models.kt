@@ -82,12 +82,26 @@ data class FuelStats(
     val rangeKm: Double?
         get() = FuelCalculator.rangeKm(fuelAfterLastRefuel, averageConsumption)
 
+    /** Орієнтовний показник лічильника, коли пальне закінчиться. */
+    val emptyAtOdometer: OdometerReading?
+        get() {
+            val last = lastOdometerKm ?: return null
+            val range = rangeKm ?: return null
+            return FuelCalculator.odometerAfter(last, range, odometerRolloverKm)
+        }
+
     val hasEntries: Boolean get() = refuelCount > 0
 
     /** Витрата інтервалу, що завершується заправкою з цим id (для історії). */
     fun consumptionEndingAt(refuelId: Long): Double? =
         intervals.firstOrNull { it.endRefuelId == refuelId }?.litersPer100Km
 }
+
+/**
+ * Показник лічильника.
+ * @param resets скільки разів лічильник обнулиться, поки дійде до цього значення
+ */
+data class OdometerReading(val km: Double, val resets: Int)
 
 /** Результат швидкого розрахунку на екрані «Прикинути». */
 sealed interface Estimate {
@@ -96,6 +110,8 @@ sealed interface Estimate {
         val fuelLeftLiters: Double,
         val rangeKm: Double,
         val capacityLiters: Double,
+        /** Орієнтовний показник лічильника, коли пальне закінчиться. */
+        val emptyAtOdometer: OdometerReading? = null,
     ) : Estimate
 
     /** Ще немає жодної заправки. */

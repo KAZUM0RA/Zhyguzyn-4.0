@@ -31,6 +31,7 @@ import com.kazum0ra.zhyguzyn.domain.Refuel
 import com.kazum0ra.zhyguzyn.ui.components.AppCard
 import com.kazum0ra.zhyguzyn.ui.components.BackTopBar
 import com.kazum0ra.zhyguzyn.ui.components.BigActionButton
+import com.kazum0ra.zhyguzyn.ui.components.EmptyAtColumn
 import com.kazum0ra.zhyguzyn.ui.components.Format
 import com.kazum0ra.zhyguzyn.ui.components.FuelGauge
 import com.kazum0ra.zhyguzyn.ui.components.ValueColumn
@@ -179,6 +180,9 @@ private fun FuelCard(overview: FuelOverview) {
                     },
                     modifier = Modifier.weight(1f),
                 )
+            }
+            stats.emptyAtOdometer?.let {
+                EmptyAtColumn(it, Modifier.padding(top = 16.dp))
             }
         }
 

@@ -23,6 +23,10 @@
     <string name="home_last_refuel_details">%1$s км · %2$s л · %3$s</string>
     <string name="home_avg">Розхід</string>
     <string name="home_range">Вистачить на</string>
+    <string name="empty_at">Пальне скінчиться на лічильнику</string>
+    <string name="empty_at_value">≈ %1$s км</string>
+    <string name="empty_at_one_reset">після обнулення лічильника</string>
+    <string name="empty_at_resets">після %1$d обнулень лічильника</string>
     <string name="home_add">⛽ Залили пальне</string>
     <string name="home_estimate">📏 Прикинути</string>
     <string name="home_no_entries">Ще немає жодної заправки. Натисніть «Залили пальне», щоб додати першу.</string>

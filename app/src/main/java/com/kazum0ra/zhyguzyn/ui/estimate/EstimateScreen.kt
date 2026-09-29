@@ -33,6 +33,7 @@ import com.kazum0ra.zhyguzyn.domain.FuelCalculator
 import com.kazum0ra.zhyguzyn.domain.FuelStats
 import com.kazum0ra.zhyguzyn.domain.NumberParser
 import com.kazum0ra.zhyguzyn.ui.components.BackTopBar
+import com.kazum0ra.zhyguzyn.ui.components.EmptyAtColumn
 import com.kazum0ra.zhyguzyn.ui.components.Format
 import com.kazum0ra.zhyguzyn.ui.components.FuelGauge
 import com.kazum0ra.zhyguzyn.ui.components.NumberField
@@ -175,7 +176,9 @@ private fun EstimateResult(result: Estimate.Ok) {
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.SemiBold,
             )
-            if (result.fuelLeftLiters <= 0.0) {
+            if (result.fuelLeftLiters > 0.0) {
+                result.emptyAtOdometer?.let { EmptyAtColumn(it, Modifier.padding(top = 8.dp)) }
+            } else {
                 Text(
                     stringResource(R.string.estimate_empty_tank),
                     color = MaterialTheme.colorScheme.error,

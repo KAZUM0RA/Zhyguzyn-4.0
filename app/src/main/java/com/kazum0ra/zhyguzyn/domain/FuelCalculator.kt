@@ -170,6 +170,17 @@ object FuelCalculator {
         return level
     }
 
+    /**
+     * Показник лічильника після [distanceKm] км від [startKm]
+     * (з урахуванням обнулення, якщо лічильник обнуляється).
+     */
+    fun odometerAfter(startKm: Double, distanceKm: Double, odometerRolloverKm: Double): OdometerReading {
+        val raw = startKm + distanceKm.coerceAtLeast(0.0)
+        if (odometerRolloverKm <= 0.0) return OdometerReading(raw, 0)
+        val resets = kotlin.math.floor(raw / odometerRolloverKm).toInt()
+        return OdometerReading(raw - resets * odometerRolloverKm, resets)
+    }
+
     /** Запас ходу на заданому залишку, км. */
     fun rangeKm(fuelLiters: Double?, average: Double?): Double? {
         if (fuelLiters == null || average == null || average <= 0.0) return null
@@ -186,11 +197,18 @@ object FuelCalculator {
         if (average == null || fuelAfter == null) return Estimate.NotEnoughData
 
         val fuelLeft = (fuelAfter - distanceKm * average / 100.0).coerceIn(0.0, stats.capacityLiters)
+        val range = rangeKm(fuelLeft, average) ?: 0.0
+        val rollover = stats.odometerRolloverKm
+        val emptyAt = stats.lastOdometerKm?.let { last ->
+            val current = odometerAfter(last, distanceKm, rollover)
+            odometerAfter(current.km, range, rollover)
+        }
         return Estimate.Ok(
             distanceKm = distanceKm,
             fuelLeftLiters = fuelLeft,
-            rangeKm = rangeKm(fuelLeft, average) ?: 0.0,
+            rangeKm = range,
             capacityLiters = stats.capacityLiters,
+            emptyAtOdometer = emptyAt,
         )
     }
 

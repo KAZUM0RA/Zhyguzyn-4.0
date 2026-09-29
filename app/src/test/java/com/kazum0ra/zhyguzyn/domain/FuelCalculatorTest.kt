@@ -432,4 +432,50 @@ class FuelCalculatorTest {
         assertEquals(ConsumptionSource.ALL_REFUELS, stats.consumptionSource)
         assertClose(7.0, stats.averageConsumption)
     }
+
+    // --- Показник лічильника, коли пальне закінчиться ---
+
+    @Test
+    fun `odometer after distance with and without rollover`() {
+        assertEquals(OdometerReading(700.0, 0), FuelCalculator.odometerAfter(500.0, 200.0, 0.0))
+        assertEquals(OdometerReading(700.0, 0), FuelCalculator.odometerAfter(500.0, 200.0, 1000.0))
+        val wrapped = FuelCalculator.odometerAfter(800.0, 450.0, 1000.0)
+        assertEquals(250.0, wrapped.km, 1e-9)
+        assertEquals(1, wrapped.resets)
+        assertEquals(2, FuelCalculator.odometerAfter(900.0, 1200.0, 1000.0).resets)
+    }
+
+    @Test
+    fun `stats show odometer reading when fuel runs out`() {
+        // 8 л/100, бак повний (50 л) → запас 625 км від показника 200
+        val stats = FuelCalculator.calculate(listOf(refuel(700.0, 50.0), refuel(200.0, 40.0)), trip)
+        val empty = stats.emptyAtOdometer!!
+        assertEquals(825.0, empty.km, 1e-9)
+        assertEquals(0, empty.resets)
+    }
+
+    @Test
+    fun `no empty-at reading without consumption`() {
+        val stats = FuelCalculator.calculate(listOf(refuel(1_000.0, 40.0)), tank)
+        assertNull(stats.emptyAtOdometer)
+    }
+
+    @Test
+    fun `estimate shows odometer reading when fuel runs out`() {
+        val stats = FuelCalculator.calculate(listOf(refuel(700.0, 50.0), refuel(200.0, 40.0)), trip)
+        // Зараз 450 (проїхали 250 км): залишилось 30 л → 375 км → 825
+        val byOdometer = FuelCalculator.estimateByOdometer(stats, 450.0) as Estimate.Ok
+        assertEquals(825.0, byOdometer.emptyAtOdometer!!.km, 1e-9)
+        // Без обнулення: 10 500 + 250 + 375
+        val plain = FuelCalculator.calculate(listOf(refuel(10_000.0, 50.0), refuel(10_500.0, 40.0)), tank)
+        val byDistance = FuelCalculator.estimateByDistance(plain, 250.0) as Estimate.Ok
+        assertEquals(OdometerReading(11_125.0, 0), byDistance.emptyAtOdometer)
+        // Через нуль: 8 л/100, бак 60 л; зараз 900 (проїхали 250 км) → 40 л → 500 км → 400 після обнулення
+        val wrapped = FuelCalculator.estimateByOdometer(
+            FuelCalculator.calculate(listOf(refuel(0.0, 50.0), refuel(650.0, 52.0)), trip.copy(capacityLiters = 60.0)),
+            900.0,
+        ) as Estimate.Ok
+        assertEquals(400.0, wrapped.emptyAtOdometer!!.km, 1e-9)
+        assertEquals(1, wrapped.emptyAtOdometer.resets)
+    }
 }
